@@ -62,14 +62,10 @@ elmHubHeader =
 view : Model -> Html Msg
 view model =
     div [ class "content" ]
-        [ header []
-            [ h1 [] [ text "ElmHub" ]
-            , span [ class "tagline" ] [ text "Like GitHub, but for Elm things." ]
-            ]
+        [ elmHubHeader
         , input
             [ class "search-query"
-
-            -- TODO onInput, set the query in the model
+            , onInput SetQuery
             , defaultValue model.query
             ]
             []
@@ -85,17 +81,26 @@ viewSearchResult result =
         , a [ href ("https://github.com/" ++ result.name), target "_blank" ]
             [ text result.name ]
         , button
-            -- TODO add an onClick handler that sends a DeleteById msg
-            [ class "hide-result" ]
+            [ class "hide-result"
+            , onClick (DeleteById result.id)
+            ]
             [ text "X" ]
         ]
 
 
 update : Msg -> Model -> Model
 update msg model =
-    -- TODO if we get a SetQuery msg, use it to set the model's query field,
-    -- and if we get a DeleteById msg, delete the appropriate result
-    model
+    case msg of
+        SetQuery queryString ->
+            { model
+                | query = queryString
+            }
+
+        DeleteById id ->
+            { model
+                | results =
+                    List.filter (\x -> x.id /= id) model.results
+            }
 
 
 main : Program Never Model Msg
