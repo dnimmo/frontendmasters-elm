@@ -59,8 +59,8 @@ decodeResults json =
 
         Err error ->
             let
-                discard_this =
-                    Debug.log error
+                _ =
+                    Debug.log "Some error" error
             in
                 []
 
