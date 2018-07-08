@@ -122,7 +122,7 @@ update msg model =
                 newModel =
                     { model | results = newResults }
             in
-            ( newModel, Cmd.none )
+                ( newModel, Cmd.none )
 
 
 type Msg
@@ -135,11 +135,12 @@ type Msg
 
 decodeResponse : Value -> Msg
 decodeResponse json =
-    -- TODO use decodeValue to decode the response into a Msg.
-    --
-    -- Hint: look at the definition of Msg and
-    -- the definition of responseDecoder
-    HandleSearchError (Just "TODO decode the response!")
+    case decodeValue responseDecoder json of
+        Ok results ->
+            HandleSearchResponse results
+
+        Err error ->
+            HandleSearchError (Just error)
 
 
 port githubSearch : String -> Cmd msg
