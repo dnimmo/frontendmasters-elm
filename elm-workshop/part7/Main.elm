@@ -29,15 +29,10 @@ searchFeed query =
                 ++ query
                 ++ "+language:elm&sort=stars&order=desc"
 
-        -- HINT: responseDecoder may be useful here.
         request =
-            "TODO replace this String with a Request built using http://package.elm-lang.org/packages/elm-lang/http/latest/Http#get"
+            Http.get url responseDecoder
     in
-    -- TODO replace this Cmd.none with a call to Http.send
-    -- http://package.elm-lang.org/packages/elm-lang/http/latest/Http#send
-    --
-    -- HINT: request and HandleSearchResponse may be useful here.
-    Cmd.none
+        Http.send HandleSearchResponse request
 
 
 responseDecoder : Decoder (List SearchResult)
@@ -126,20 +121,29 @@ update msg model =
         HandleSearchResponse result ->
             case result of
                 Ok results ->
-                    ( { model | results = results }, Cmd.none )
+                    ( { model
+                        | results = results
+                        , errorMessage = Nothing
+                      }
+                    , Cmd.none
+                    )
 
                 Err error ->
-                    -- TODO if decoding failed, store the message in model.errorMessage
-                    --
-                    -- HINT 1: Remember, model.errorMessage is a Maybe String - so it
-                    -- can only be set to either Nothing or (Just "some string here")
-                    --
-                    -- Hint 2: look for "decode" in the documentation for this union type:
-                    -- http://package.elm-lang.org/packages/elm-lang/http/latest/Http#Error
-                    --
-                    -- Hint 3: to check if this is working, break responseDecoder
-                    -- by changing "stargazers_count" to "description"
-                    ( model, Cmd.none )
+                    case error of
+                        Http.BadUrl string ->
+                            ( { model | errorMessage = Just string }, Cmd.none )
+
+                        Http.Timeout ->
+                            ( { model | errorMessage = Just "Request timed out" }, Cmd.none )
+
+                        Http.NetworkError ->
+                            ( { model | errorMessage = Just "Network error" }, Cmd.none )
+
+                        Http.BadStatus response ->
+                            ( { model | errorMessage = Just response.status.message }, Cmd.none )
+
+                        Http.BadPayload explanation _ ->
+                            ( { model | errorMessage = Just explanation }, Cmd.none )
 
         SetQuery query ->
             ( { model | query = query }, Cmd.none )
@@ -153,4 +157,4 @@ update msg model =
                 newModel =
                     { model | results = newResults }
             in
-            ( newModel, Cmd.none )
+                ( newModel, Cmd.none )
