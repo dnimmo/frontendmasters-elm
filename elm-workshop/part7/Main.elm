@@ -116,7 +116,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Search ->
-            ( model, searchFeed model.query )
+            ( { model | errorMessage = Nothing }, searchFeed model.query )
 
         HandleSearchResponse result ->
             case result of
@@ -129,21 +129,28 @@ update msg model =
                     )
 
                 Err error ->
-                    case error of
-                        Http.BadUrl string ->
-                            ( { model | errorMessage = Just string }, Cmd.none )
+                    ( { model
+                        | errorMessage =
+                            Just
+                                (case error of
+                                    Http.BadUrl string ->
+                                        string
 
-                        Http.Timeout ->
-                            ( { model | errorMessage = Just "Request timed out" }, Cmd.none )
+                                    Http.Timeout ->
+                                        "Request timed out"
 
-                        Http.NetworkError ->
-                            ( { model | errorMessage = Just "Network error" }, Cmd.none )
+                                    Http.NetworkError ->
+                                        "Network error"
 
-                        Http.BadStatus response ->
-                            ( { model | errorMessage = Just response.status.message }, Cmd.none )
+                                    Http.BadStatus response ->
+                                        response.status.message
 
-                        Http.BadPayload explanation _ ->
-                            ( { model | errorMessage = Just explanation }, Cmd.none )
+                                    Http.BadPayload explanation _ ->
+                                        "Error: " ++ explanation
+                                )
+                      }
+                    , Cmd.none
+                    )
 
         SetQuery query ->
             ( { model | query = query }, Cmd.none )
